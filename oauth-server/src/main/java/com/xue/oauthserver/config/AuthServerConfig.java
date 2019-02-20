@@ -19,6 +19,7 @@ import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
+import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -137,11 +138,11 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
         // 测试用,资源服务使用相同的字符达到一个对称加密的效果,生产时候使用RSA非对称加密方式
 
         //对称加密
-//        accessTokenConverter.setSigningKey("SigningKey");
+        accessTokenConverter.setSigningKey("SigningKey");
 
         //RSA加密
-        accessTokenConverter.setSigningKey(privateKey);
-        accessTokenConverter.setVerifierKey(publicKey);
+//        accessTokenConverter.setSigningKey(privateKey);
+//        accessTokenConverter.setVerifierKey(publicKey);
 
         return accessTokenConverter;
     }
@@ -168,21 +169,25 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
         };
     }
 
-//    @Bean
-//    public TokenStore tokenStore() {
-//        RedisTokenStore tokenStore = new RedisTokenStore(redisConnectionFactory);
-//        return tokenStore;
-//    }
-
     /**
-     * token 保存
+     * redis key 保存
      * @return
      */
     @Bean
     public TokenStore tokenStore() {
-        JwtTokenStore jwtTokenStore = new JwtTokenStore(accessTokenConverter());
-        return jwtTokenStore;
+        RedisTokenStore tokenStore = new RedisTokenStore(redisConnectionFactory);
+        return tokenStore;
     }
+
+    /**
+     *  jwt token 保存
+     * @return
+     */
+//    @Bean
+//    public TokenStore tokenStore() {
+//        JwtTokenStore jwtTokenStore = new JwtTokenStore(accessTokenConverter());
+//        return jwtTokenStore;
+//    }
 
 
 }
