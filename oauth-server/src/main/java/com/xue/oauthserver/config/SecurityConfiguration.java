@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.User;
@@ -19,7 +20,8 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
-    // 请配置这个，以保证在刷新Token时能成功刷新
+
+    //配置用户认证 用户查询模块
     @Autowired
     public void globalUserDetails(AuthenticationManagerBuilder auth) throws Exception {
         // 配置用户来源于数据库
@@ -27,6 +29,11 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         auth.userDetailsService(userDetailsService()).passwordEncoder(new BCryptPasswordEncoder());
     }
 
+    /**
+     * 用户加载模块
+     *
+     * @return
+     */
     @Bean
     @Override
     protected UserDetailsService userDetailsService() {
@@ -36,7 +43,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
         BCryptPasswordEncoder passwordEncode = new BCryptPasswordEncoder();
         String pwd = passwordEncode.encode("123456");
-        manager.createUser(User.withUsername("user_1").password(pwd).authorities("USER").roles("admin").build());
+        manager.createUser(User.withUsername("user_1").password(pwd).authorities("A1102","B332").roles("admin").build());
         manager.createUser(User.withUsername("user_2").password(pwd).authorities("USER").build());
         return manager;
 
@@ -60,11 +67,18 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     }
 
+
+    /**
+     * 配置拦截路径
+     *
+     * @param http
+     * @throws Exception
+     */
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        // @formatter:off
 //        http.requestMatchers().anyRequest().and().authorizeRequests().antMatchers("/oauth/**").permitAll();
         http.authorizeRequests().antMatchers("/oauth/**").permitAll();
-        // @formatter:on
     }
+
+
 }

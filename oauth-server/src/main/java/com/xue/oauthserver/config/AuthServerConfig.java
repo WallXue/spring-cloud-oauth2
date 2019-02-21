@@ -1,24 +1,21 @@
 package com.xue.oauthserver.config;
 
-import com.alibaba.fastjson.JSON;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
-import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
-import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.TokenEnhancer;
 import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
-import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore;
 
 import java.util.Arrays;
@@ -32,14 +29,14 @@ import java.util.Map;
 @Configuration
 @EnableAuthorizationServer
 public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
-    // 资源ID
-    private static final String SOURCE_ID = "order";
-    private static final int ACCESS_TOKEN_TIMER = 60 * 60 * 24;
-    private static final int REFRESH_TOKEN_TIMER = 60 * 60 * 24 * 30;
+    //token有效时间 秒   30分钟
+    private static final int ACCESS_TOKEN_TIMER = 60 * 30;
+    //刷新token有效时间 秒   2天
+    private static final int REFRESH_TOKEN_TIMER = 60 * 60 * 24 * 2;
 
 
     //key 长度会影响    报名加密大小
-    String privateKey="-----BEGIN RSA PRIVATE KEY-----" +
+    String privateKey = "-----BEGIN RSA PRIVATE KEY-----" +
             "MIIEowIBAAKCAQEAm4irSNcR7CSSfXconxL4g4M4j34wTWdTv93ocMn4VmdB7rCB" +
             "U/BlxXtBUf/cgLIgQhQrAPszSZSmxiEXCOkGPr4aQBQuPgmNIR95Dhbzw/ZN0Bne" +
             "cAt3ZfkkDBHv8kH3kR/jYGTdwrxKeDgXGljNsTRhbjuASxPG/Z6gU1yRPCsgc2r8" +
@@ -67,7 +64,7 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
             "iKvvCOJq6kl3/opO+ybqJ8dzkEyoj8K4+fcX1+U6eW2w+vSpOosG" +
             "-----END RSA PRIVATE KEY-----";
 
-    String publicKey="-----BEGIN PUBLIC KEY-----" +
+    String publicKey = "-----BEGIN PUBLIC KEY-----" +
             "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAm4irSNcR7CSSfXconxL4" +
             "g4M4j34wTWdTv93ocMn4VmdB7rCBU/BlxXtBUf/cgLIgQhQrAPszSZSmxiEXCOkG" +
             "Pr4aQBQuPgmNIR95Dhbzw/ZN0BnecAt3ZfkkDBHv8kH3kR/jYGTdwrxKeDgXGljN" +
@@ -77,14 +74,22 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
             "8wIDAQAB" +
             "-----END PUBLIC KEY-----";
 
-    @Autowired
     AuthenticationManager authenticationManager;
 
     @Autowired
     RedisConnectionFactory redisConnectionFactory;
 
+
+    public AuthServerConfig(
+            AuthenticationConfiguration authenticationConfiguration
+    ) throws Exception {
+        this.authenticationManager = authenticationConfiguration.getAuthenticationManager();
+    }
+
+
     /**
      * 配置auth server 基本信息
+     *
      * @param clients
      * @throws Exception
      */
@@ -93,16 +98,18 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
         clients.inMemory()
                 .withClient("myapp")//（必填）客户端ID。
 //                .resourceIds(SOURCE_ID)
-                .authorizedGrantTypes("password"/*, "refresh_token"*/)//授予客户端使用授权的类型。默认值为空。
+                .authorizedGrantTypes("password", "refresh_token")//授予客户端使用授权的类型。默认值为空。
                 .scopes("all")//客户受限的范围。如果范围未定义或为空（默认值），客户端不受范围限制。read write all
 //                .authorities("ADMIN")//授予客户的授权机构（普通的Spring Security权威机构）。
-//                .secret("lxapp")//(可信客户端需要）客户机密码（如果有）。没有可不填
+                .secret("{noop}")//(可信客户端需要）客户机密码（如果有）。没有可不填。加密需要配置passwordEncoder
                 .accessTokenValiditySeconds(ACCESS_TOKEN_TIMER)
-                .refreshTokenValiditySeconds(REFRESH_TOKEN_TIMER);
+                .refreshTokenValiditySeconds(REFRESH_TOKEN_TIMER)
+        ;
     }
 
     /**
      * 配置token生成规则，保存方式，登录认证方式
+     *
      * @param endpoints
      * @throws Exception
      */
@@ -115,11 +122,13 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
         endpoints.accessTokenConverter(accessTokenConverter());
         endpoints.tokenStore(tokenStore());
         endpoints.authenticationManager(authenticationManager);
+        endpoints.reuseRefreshTokens(false);//false ：刷新token可以重新续，（刷完一次后返回的刷新token还可以无限刷下去，在刷新token有效期内用户可以永远不用登陆） true:用户密码登陆一次后刷新token可以用一次，刷新时返回的token不再可用
 //        endpoints.pathMapping("/oauth/authorize", "/abc/");  替换默认URL路径
     }
 
     /**
      * 配置auth server 参数
+     *
      * @param oauthServer
      * @throws Exception
      */
@@ -129,6 +138,7 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
         oauthServer.allowFormAuthenticationForClients();// 允许表单认证
         oauthServer.tokenKeyAccess("permitAll()");//开放token_key url 客户端获取jwt公钥
         oauthServer.checkTokenAccess("hasAuthority('ROLE_TRUSTED_CLIENT')");//check_token 接口开放  以便资源服务可以进行访问
+//        oauthServer.passwordEncoder(new BCryptPasswordEncoder());//secret 加密用
     }
 
     // JWT 生成器
@@ -138,17 +148,17 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
         // 测试用,资源服务使用相同的字符达到一个对称加密的效果,生产时候使用RSA非对称加密方式
 
         //对称加密
-        accessTokenConverter.setSigningKey("SigningKey");
+//        accessTokenConverter.setSigningKey("SigningKey");
 
         //RSA加密
-//        accessTokenConverter.setSigningKey(privateKey);
-//        accessTokenConverter.setVerifierKey(publicKey);
-
+        accessTokenConverter.setSigningKey(privateKey);
+        accessTokenConverter.setVerifierKey(publicKey);
         return accessTokenConverter;
     }
 
     /**
      * 用户信息补充
+     *
      * @return
      */
     @Bean
@@ -163,7 +173,7 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
             userinfo.put("username", userName);
             userinfo.put("qqnum", "438944209");
             userinfo.put("userFlag", "1");
-            additionalInformation.put("userinfo", JSON.toJSONString(userinfo));
+            additionalInformation.put("userinfo", userinfo);
             ((DefaultOAuth2AccessToken) accessToken).setAdditionalInformation(additionalInformation);
             return accessToken;
         };
@@ -171,6 +181,7 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 
     /**
      * redis key 保存
+     *
      * @return
      */
     @Bean

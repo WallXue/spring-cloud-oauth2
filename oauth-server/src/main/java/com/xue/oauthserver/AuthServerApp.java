@@ -1,6 +1,5 @@
 package com.xue.oauthserver;
 
-import org.apache.commons.codec.binary.Base64;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 

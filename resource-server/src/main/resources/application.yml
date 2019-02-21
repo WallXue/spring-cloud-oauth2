@@ -2,14 +2,15 @@ server:
   port: 8081
 spring:
   redis:
-    host: 127.0.0.1
-    password: null
-    port: 6379
-    pool:
-      max-idle: 100
-      min-idle: 1
-      max-active: 1000
-      max-wait: -1
+    jedis:
+      host: 127.0.0.1
+      password: null
+      port: 6379
+      pool:
+        max-idle: 100
+        min-idle: 1
+        max-active: 1000
+        max-wait: -1
 #security:
 #  oauth2:
 #    resource:

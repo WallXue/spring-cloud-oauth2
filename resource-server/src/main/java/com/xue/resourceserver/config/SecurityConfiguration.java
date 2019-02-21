@@ -68,7 +68,7 @@ public class SecurityConfiguration extends ResourceServerConfigurerAdapter {
 //        accessTokenConverter.setVerifierKey(publicKey);
 
         //对称加密
-        accessTokenConverter.setSigningKey("SigningKey");
+//        accessTokenConverter.setSigningKey("SigningKey");
 
         return accessTokenConverter;
     }
