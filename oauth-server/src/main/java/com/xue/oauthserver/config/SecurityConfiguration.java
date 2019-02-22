@@ -43,8 +43,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
         BCryptPasswordEncoder passwordEncode = new BCryptPasswordEncoder();
         String pwd = passwordEncode.encode("123456");
-        manager.createUser(User.withUsername("user_1").password(pwd).authorities("A1102","B332").roles("admin").build());
-        manager.createUser(User.withUsername("user_2").password(pwd).authorities("USER").build());
+        manager.createUser(User.withUsername("user_1").password(pwd).authorities("A","B").build());
+        manager.createUser(User.withUsername("user_2").password(pwd).authorities("C").build());
         return manager;
 
         // #####################实际开发中在下面写从数据库获取数据###############################

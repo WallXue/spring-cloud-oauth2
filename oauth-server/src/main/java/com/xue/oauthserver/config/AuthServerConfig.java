@@ -171,7 +171,6 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
             Map<String, String> userinfo = new HashMap<>();
             userinfo.put("id", "1");
             userinfo.put("username", userName);
-            userinfo.put("qqnum", "438944209");
             userinfo.put("userFlag", "1");
             additionalInformation.put("userinfo", userinfo);
             ((DefaultOAuth2AccessToken) accessToken).setAdditionalInformation(additionalInformation);

@@ -1,5 +1,6 @@
 package com.xue.resourceserver.contrl;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
@@ -16,6 +17,7 @@ public class SecurityController {
 
     @GetMapping("/sc/boss")
     @ResponseBody
+    @PreAuthorize("hasAnyAuthority('A', 'B')")
     public String sc(OAuth2Authentication auth) {
         SecurityContext context = SecurityContextHolder.getContext();
         Object principal = context.getAuthentication().getPrincipal();

@@ -2,6 +2,7 @@ package com.xue.resourceserver;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 
 /**
  * @author Xuewu
@@ -9,6 +10,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  */
 
 @SpringBootApplication
+@EnableGlobalMethodSecurity(prePostEnabled=true)
 public class ResourceServerApp {
 
     public static void main(String[] args) {
